@@ -596,7 +596,8 @@ async function syncFeeds(force){
 /* ---------- sync status, sign-in, boot ---------- */
 function greet(){const h=new Date().getHours(),n=cfg().name;$("hello").textContent=(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening")+(n?", "+n:"")}
 function ago(iso){if(!iso)return"";const m=Math.round((Date.now()-new Date(iso))/60000);return m<1?"just now":m<60?m+" min ago":new Date(iso).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}
-function renderSync(s){const p=s.pending?` · ${s.pending} waiting`:"";
+function renderSync(s){
+  if(!S.loaded){const m=$("loadingMsg");if(m)m.textContent=(s.state==="offline"||s.state==="error")?"Can't reach Journal Junkie right now. Check your connection and it will load on its own.":"Opening your journal…"}const p=s.pending?` · ${s.pending} waiting`:"";
   $("sync").textContent={idle:"",syncing:"Syncing…",saving:"Saving…",synced:"Synced "+ago(s.at),offline:"Offline"+p+" · saved on this phone",error:"Couldn't sync"+p+" · tap to retry",auth:"Signed out · tap to sign in"}[s.state]||"";
   $("sync").dataset.state=s.state}
 $("sync").onclick=()=>{if(JJ.status().state==="auth")JJ.signIn();else JJ.pull()};
@@ -607,6 +608,7 @@ $("appleBtn").hidden=!(JJ.appleEnabled&&JJ.appleEnabled());
 
 function onData(){
   if(!S.loaded)return;
+  $("loading").hidden=true;
   greet();syncReminder();
   if(!dirty)fillForm();else renderChips();
   renderTasks();if(tab==="stats")renderStats();
@@ -616,7 +618,7 @@ function boot(){
   db=JJ.db;
   JJ.onStatus(s=>{renderSync(s);if(!S.loaded&&JJ.user()&&(s.state==="synced"||((s.state==="offline"||s.state==="error")&&S.settings))){S.loaded=true;onData();syncFeeds(false)}});
   JJ.onAuth(u=>{
-    $("signin").hidden=!!u;$("app").hidden=!u;$("signInBtn").disabled=false;$("appleBtn").disabled=false;
+    $("signin").hidden=!!u;$("app").hidden=!u;$("loading").hidden=!u||S.loaded;$("signInBtn").disabled=false;$("appleBtn").disabled=false;
     if(!JJ.configured){$("signInBtn").hidden=true;$("appleBtn").hidden=true;$("notConfigured").hidden=false}
     if(!u){S.loaded=false;$("onboard").hidden=true}
   });
