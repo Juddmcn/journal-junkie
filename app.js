@@ -224,7 +224,7 @@ function renderTasks(){
   $("viewSeg").hidden=!hasClasses;if(!hasClasses)taskView="sections";
   document.querySelectorAll("#viewSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===taskView));
   if(taskView==="impact"){$("taskAreas").innerHTML=renderImpact();return}
-  const group=(key,name,color,list,byDue)=>{
+  const group=(key,name,color,list,byDue,emptyMsg)=>{
     const open=list.filter(t=>!isDone(t,day)),doneToday=list.filter(t=>isDone(t,day)&&(t.repeat||t.doneDate===day));
     open.sort(byDue?((a,b)=>((a.due||"9999")<(b.due||"9999")?-1:(a.due===b.due?(PRI[a.priority]??1)-(PRI[b.priority]??1):1))):((a,b)=>(PRI[a.priority]??1)-(PRI[b.priority]??1)||((a.due||"9999")<(b.due||"9999")?-1:1)));
     const soon=open.filter(t=>t.repeat||!t.due||t.due<=horizon),later=open.filter(t=>!(t.repeat||!t.due||t.due<=horizon));
@@ -232,15 +232,15 @@ function renderTasks(){
     const doneOld=list.filter(t=>!t.repeat&&t.done&&t.doneDate!==day).sort((a,b)=>(b.doneDate||"")<(a.doneDate||"")?-1:1);
     if(later.length)rows+=showMore[key]?later.map(taskRow).join("")+`<button class="more" data-more="${key}">Hide later</button>`:`<button class="more" data-more="${key}">+ ${later.length} due after ${fmtShort(horizon)}</button>`;
     if(doneOld.length){const dk=key+"-done";rows+=showMore[dk]?doneOld.map(taskRow).join("")+`<button class="more" data-more="${dk}">Hide finished</button>`:`<button class="more" data-more="${dk}" style="display:block">Show ${doneOld.length} finished</button>`}
-    return`<section><div class="area-h"><i style="background:${color}"></i>${name}<span class="muted small num" style="margin-left:auto">${open.length} open</span></div><div>${rows||`<div class="empty">Nothing here yet.</div>`}</div></section>`;
+    return`<section><div class="area-h"><i style="background:${color}"></i>${name}<span class="muted small num" style="margin-left:auto">${open.length} open</span></div><div>${rows||`<div class="empty">${emptyMsg||"Nothing here yet."}</div>`}</div></section>`;
   };
   let html="";
   for(const a of areas()){
     const list=S.tasks.filter(t=>t.area===a.key);
     if(a.classes){
-      html+=group(a.key+"-a",`${esc(a.name)} · quizzes &amp; tests`,"var(--bad)",list.filter(t=>t.kind!=="event"&&kindOf(t)!=="homework"),true);
-      html+=group(a.key+"-h",`${esc(a.name)} · homework`,areaColor(a),list.filter(t=>t.kind==="event"||kindOf(t)==="homework"),true);
-    }else html+=group(a.key,esc(a.name),areaColor(a),list,false);
+      html+=group(a.key+"-a",`${esc(a.name)} · quizzes &amp; tests`,"var(--bad)",list.filter(t=>t.kind!=="event"&&kindOf(t)!=="homework"),true,"No quizzes or tests coming up.");
+      html+=group(a.key+"-h",`${esc(a.name)} · homework`,areaColor(a),list.filter(t=>t.kind==="event"||kindOf(t)==="homework"),true,cfg().feeds.length?"No homework due. Nice.":"No homework yet. Add your Canvas calendar link on the Me tab and assignments show up here.");
+    }else html+=group(a.key,esc(a.name),areaColor(a),list,false,`Nothing on your ${esc(a.name)} list. Add one above.`);
   }
   const orphan=S.tasks.filter(t=>!areaBy(t.area));
   if(orphan.length)html+=group("other","Other","var(--muted)",orphan,false);
@@ -380,7 +380,7 @@ function renderHabitStats(){
   const hs=cfg().habits,days=lastDays(14);
   $("habitStat").hidden=!hs.length;
   $("habitBox").innerHTML=hs.map(h=>{const yes=days.filter(d=>S.logs[d]?.habits?.[h.key]===true).length,logged=days.filter(d=>S.logs[d]?.habits?.[h.key]!=null).length;
-    return`<div style="display:flex;flex-direction:column;gap:4px;padding:6px 0"><div class="row" style="justify-content:space-between"><span class="small">${esc(h.label)}</span><span class="small num">${yes}/${logged||0} days</span></div><div class="bar"><div style="width:${logged?yes/logged*100:0}%;background:var(--good)"></div></div></div>`}).join("");
+    return`<div style="display:flex;flex-direction:column;gap:4px;padding:6px 0"><div class="row" style="justify-content:space-between"><span class="small">${esc(h.label)}</span><span class="small num">${logged?`${yes}/${logged} days`:"Not logged yet"}</span></div><div class="bar"><div style="width:${logged?yes/logged*100:0}%;background:var(--good)"></div></div></div>`}).join("");
 }
 function renderLift(){
   const m={};Object.keys(S.logs).sort().forEach(d=>(S.logs[d].workoutNotes?.prs||[]).forEach(p=>{if(p.weight==null)return;const k=p.lift.trim().toLowerCase();(m[k]=m[k]||{name:p.lift.trim(),pts:{}});if(m[k].pts[d]==null||p.weight>m[k].pts[d])m[k].pts[d]=p.weight}));
