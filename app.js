@@ -356,8 +356,25 @@ function renderStats(){
   $("sleepStat").hidden=!c.track.sleep;$("moodStat").hidden=!c.track.mood;
   $("chSleep").innerHTML=sl.some(v=>v!=null)?lineChart(lab,sl,{min:4,max:Math.max(10,...sl.filter(v=>v!=null)),unit:"h",color:"var(--blue)"}):emptyChart("No sleep logged yet.");
   $("chMood").innerHTML=md.some(v=>v!=null)?lineChart(lab,md,{min:1,max:10,color:"var(--orange)"}):emptyChart("No mood ratings yet.");
-  renderLift();renderGradeStats();renderHabitStats();
+  renderLift();renderGradeStats();renderHabitStats();renderJournal();
 }
+let journalAll=false;
+const MOOD_FACE=m=>m==null?"":m>=9?"Great":m>=7?"Good":m>=5?"Okay":m>=3?"Low":"Rough";
+function renderJournal(){
+  const days=Object.keys(S.logs).filter(d=>S.logs[d]&&(S.logs[d].note||S.logs[d].mood!=null)).sort().reverse();
+  if(!days.length){$("journalList").innerHTML=`<div class="empty">Your journal entries will show up here. Write a few lines in today's log tonight.</div>`;return}
+  const shown=journalAll?days:days.slice(0,5);
+  $("journalList").innerHTML=shown.map(d=>{const l=S.logs[d],dt=parse(d);
+    const date=dt.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+    const note=(l.note||"").trim();
+    return`<button type="button" class="jrow" data-jday="${d}"><div class="jtop"><span class="jdate">${esc(date)}</span>${l.mood!=null?`<span class="jmood">${esc(MOOD_FACE(l.mood))} · ${l.mood}/10</span>`:""}</div>${note?`<div class="jnote">${esc(note)}</div>`:`<div class="jnote muted">No journal entry</div>`}</button>`}).join("")
+    +(days.length>5?`<button type="button" class="more" id="journalMore">${journalAll?"Show less":"Show all "+days.length+" entries"}</button>`:"");
+}
+$("journalList").addEventListener("click",e=>{
+  if(e.target.closest("#journalMore")){journalAll=!journalAll;renderJournal();return}
+  const r=e.target.closest("[data-jday]");if(!r)return;
+  curDate=r.dataset.jday;fillForm();showTab("log");
+});
 function renderHabitStats(){
   const hs=cfg().habits,days=lastDays(14);
   $("habitStat").hidden=!hs.length;
