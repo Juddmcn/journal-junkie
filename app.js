@@ -187,7 +187,8 @@ function renderChips(){
 }
 $("saveLog").onclick=async()=>{
   const prev=S.logs[curDate];
-  try{await db.doc("logs/"+curDate).set(draftLog());dirty=false;haptic("success");toast(prev?"Log updated":"Log saved")}catch(e){toast("Couldn't save: "+(e.message||e))}
+  try{const dl=draftLog();await db.doc("logs/"+curDate).set(dl);dirty=false;haptic("success");
+    if(curDate===today()&&goalParts(dl,curDate,{...S.logs,[curDate]:dl}).all){const n=streaks().goal;toast(n>1?`Every goal hit. ${n}-day streak!`:"Every goal hit today. Streak started!")}else toast(prev?"Log updated":"Log saved")}catch(e){toast("Couldn't save: "+(e.message||e))}
 };
 
 /* grades */
