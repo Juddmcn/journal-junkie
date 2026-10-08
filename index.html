@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Journal Junkie</title>
 <meta name="description" content="Your nightly check-in: log your day, keep your to-dos, watch your streaks grow.">
-<meta name="theme-color" content="#ffffff">
-<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Journal Junkie">
@@ -14,8 +15,6 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -45,12 +44,13 @@
 
 <!-- APP -->
 <div id="app" hidden>
+<div class="navbar" aria-hidden="true"><div class="nb-in" id="navTitle">Today</div></div>
 <div class="wrap">
   <button type="button" class="sync" id="sync" aria-live="polite"></button>
 
   <div id="tab-log">
     <div class="top">
-      <div><div class="hello" id="hello"></div><h1>Today's log</h1><div class="date" id="logDateLabel"></div></div>
+      <div><div class="hello" id="hello"></div><h1>Today</h1><div class="date" id="logDateLabel"></div></div>
       <input type="date" id="logDate" aria-label="Log date">
     </div>
     <section>

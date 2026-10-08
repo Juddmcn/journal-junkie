@@ -11,7 +11,7 @@ const today=()=>ymd(new Date());
 const weekStart=s=>{const d=parse(s);const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return ymd(d)};
 const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const PRI={high:0,med:1,low:2};
-const PALETTE=["#4f7fd6","#9a6ad3","#f0a03a","#36a873","#e0533d","#22a6b8","#d6589a","#8a8f3a"];
+const PALETTE=["#007aff","#af52de","#ff9500","#34c759","#ff3b30","#30b0c7","#ff2d55","#a2845e"];
 const clone=x=>JSON.parse(JSON.stringify(x));
 const slug=s=>(String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"area")+"-"+Math.random().toString(36).slice(2,6);
 const fmtShort=s=>{const d=parse(s);return DOW[d.getDay()]+" "+(d.getMonth()+1)+"/"+d.getDate()};
@@ -31,11 +31,14 @@ function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout
 
 /* ---------- tabs ---------- */
 const TABS=["log","tasks","stats","me"];
+const TAB_TITLES={log:"Today",tasks:"To-do",stats:"Progress",me:"Me"};
+function onScroll(){document.body.classList.toggle("scrolled",window.scrollY>44)}
+window.addEventListener("scroll",onScroll,{passive:true});
 function showTab(t){tab=t;TABS.forEach(x=>$("tab-"+x).hidden=x!==t);
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
-  $("saveBar").hidden=t!=="log";
+  $("saveBar").hidden=t!=="log";$("navTitle").textContent=TAB_TITLES[t];
   if(t==="stats")renderStats();if(t==="me")renderMe();if(t==="tasks")renderTasks();
-  window.scrollTo(0,0)}
+  window.scrollTo(0,0);onScroll()}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 
 /* ---------- task logic ---------- */
@@ -295,21 +298,21 @@ function lastDays(n){const t=today();return Array.from({length:n},(_,i)=>addDays
 function barChart(days,segs,{max,goal,unit=""}){
   const W=340,H=130,L=28,B=18,T=8,n=days.length,bw=(W-L)/n,y=v=>T+(H-T-B)*(1-v/max);
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
-  [0,max/2,max].forEach(v=>{s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end">${+v.toFixed(1)}${unit}</text>`});
+  [0,max/2,max].forEach(v=>{s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--sep)" stroke-width=".5"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end">${+v.toFixed(1)}${unit}</text>`});
   days.forEach((d,i)=>{let acc=0;const x=L+i*bw+bw*.18,w=bw*.64;
-    segs(d).forEach(([v,col])=>{if(!v)return;const h=(H-T-B)*(Math.min(v,max-acc)/max);if(h<=0)return;acc+=v;s+=`<rect x="${x}" y="${y(Math.min(acc,max))}" width="${w}" height="${h}" rx="3" fill="${col}"/>`});
+    segs(d).forEach(([v,col])=>{if(!v)return;const h=(H-T-B)*(Math.min(v,max-acc)/max);if(h<=0)return;acc+=v;s+=`<rect x="${x}" y="${y(Math.min(acc,max))}" width="${w}" height="${h}" rx="3" style="fill:${col}"/>`});
     if(i%2===(n-1)%2)s+=`<text x="${x+w/2}" y="${H-5}" text-anchor="middle">${parse(d).getDate()}</text>`});
-  if(goal)s+=`<line x1="${L}" x2="${W}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--fg)" stroke-dasharray="3 3" opacity=".5"/>`;
+  if(goal)s+=`<line x1="${L}" x2="${W}" y1="${y(goal)}" y2="${y(goal)}" style="stroke:var(--label2)" stroke-dasharray="3 3"/>`;
   return s+"</svg>";
 }
 function lineChart(labels,vals,{min,max,unit="",color="var(--accent)"}){
   const W=340,H=120,L=28,B=18,T=10,R=8,n=labels.length,step=n>1?(W-L-R)/(n-1):0,x=i=>n>1?L+i*step:(L+W)/2,y=v=>T+(H-T-B)*(1-(v-min)/(max-min));
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
-  [min,(min+max)/2,max].forEach(v=>{s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end">${+v.toFixed(1)}${unit}</text>`});
+  [min,(min+max)/2,max].forEach(v=>{s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--sep)" stroke-width=".5"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end">${+v.toFixed(1)}${unit}</text>`});
   let seg=[],paths=[];vals.forEach((v,i)=>{if(v==null){if(seg.length)paths.push(seg);seg=[]}else seg.push(`${x(i)},${y(v)}`)});if(seg.length)paths.push(seg);
-  paths.forEach(p=>s+=`<polyline points="${p.join(" ")}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`);
+  paths.forEach(p=>s+=`<polyline points="${p.join(" ")}" fill="none" style="stroke:${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`);
   let li=-1;vals.forEach((v,i)=>{if(v!=null)li=i});
-  vals.forEach((v,i)=>{if(v!=null)s+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===li?4.5:2.5}" fill="${color}"/>`});
+  vals.forEach((v,i)=>{if(v!=null)s+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===li?4.5:2.5}" style="fill:${color}"/>`});
   labels.forEach((l,i)=>{if(n<=8||i%2===(n-1)%2)s+=`<text x="${x(i)}" y="${H-4}" text-anchor="middle">${esc(l)}</text>`});
   return s+"</svg>";
 }
@@ -318,7 +321,7 @@ function renderStats(){
   const c=cfg(),st=streaks();
   $("stGoal2").textContent=st.goal;$("stLog2").textContent=st.log;$("bestGoal").textContent=st.bestGoal;$("bestLog").textContent=st.bestLog;
   const days=lastDays(14),has=days.some(d=>S.logs[d]);
-  $("chComp").innerHTML=has?barChart(days,d=>{const l=S.logs[d];if(!l)return[];return[[l.completion??100,goalParts(l,d).all?"var(--accent)":"#d9c8bc"]]},{max:100,unit:"%"})+`<div class="legend"><span><i style="background:var(--accent)"></i>Hit every goal</span><span><i style="background:#d9c8bc"></i>Missed one</span></div>`:emptyChart("Bars appear after your first saved log.");
+  $("chComp").innerHTML=has?barChart(days,d=>{const l=S.logs[d];if(!l)return[];return[[l.completion??100,goalParts(l,d).all?"var(--accent)":"var(--fill2)"]]},{max:100,unit:"%"})+`<div class="legend"><span><i style="background:var(--accent)"></i>Hit every goal</span><span><i style="background:var(--fill2)"></i>Missed one</span></div>`:emptyChart("Bars appear after your first saved log.");
   const ar=c.areas;
   const maxH=Math.max(4,...days.map(d=>Object.values(S.logs[d]?.hours||{}).reduce((s,x)=>s+(x||0),0)));
   $("hoursLegend").innerHTML=ar.map(a=>`<span><i style="background:${areaColor(a)}"></i>${esc(a.name)}</span>`).join("");
@@ -328,8 +331,8 @@ function renderStats(){
   const lab=days.map(d=>String(parse(d).getDate()));
   const sl=days.map(d=>S.logs[d]?.sleep??null),md=days.map(d=>S.logs[d]?.mood??null);
   $("sleepStat").hidden=!c.track.sleep;$("moodStat").hidden=!c.track.mood;
-  $("chSleep").innerHTML=sl.some(v=>v!=null)?lineChart(lab,sl,{min:4,max:Math.max(10,...sl.filter(v=>v!=null)),unit:"h",color:"#4f7fd6"}):emptyChart("No sleep logged yet.");
-  $("chMood").innerHTML=md.some(v=>v!=null)?lineChart(lab,md,{min:1,max:10,color:"#f0a03a"}):emptyChart("No mood ratings yet.");
+  $("chSleep").innerHTML=sl.some(v=>v!=null)?lineChart(lab,sl,{min:4,max:Math.max(10,...sl.filter(v=>v!=null)),unit:"h",color:"var(--blue)"}):emptyChart("No sleep logged yet.");
+  $("chMood").innerHTML=md.some(v=>v!=null)?lineChart(lab,md,{min:1,max:10,color:"var(--orange)"}):emptyChart("No mood ratings yet.");
   renderLift();renderGradeStats();renderHabitStats();
 }
 function renderHabitStats(){
@@ -345,7 +348,7 @@ function renderLift(){
   if(!keys.length){sel.hidden=true;$("chLift").innerHTML=emptyChart("Add a lift with a weight in your workout log and it charts here.");return}
   sel.hidden=false;const prev=sel.value;sel.innerHTML=keys.map(k=>`<option value="${esc(k)}">${esc(m[k].name)}</option>`).join("");if(keys.includes(prev))sel.value=prev;
   const L=m[sel.value],ds=Object.keys(L.pts).sort().slice(-12),vals=ds.map(d=>L.pts[d]),lo=Math.min(...vals),hi=Math.max(...vals),pv=Math.max(5,(hi-lo)*.15);
-  $("chLift").innerHTML=lineChart(ds.map(d=>{const x=parse(d);return(x.getMonth()+1)+"/"+x.getDate()}),vals,{min:Math.max(0,Math.floor(lo-pv)),max:Math.ceil(hi+pv),color:"#36a873"})+`<div class="small muted">Best: <span class="num">${hi} lb</span></div>`;
+  $("chLift").innerHTML=lineChart(ds.map(d=>{const x=parse(d);return(x.getMonth()+1)+"/"+x.getDate()}),vals,{min:Math.max(0,Math.floor(lo-pv)),max:Math.ceil(hi+pv),color:"var(--green)"})+`<div class="small muted">Best: <span class="num">${hi} lb</span></div>`;
 }
 $("liftSel").onchange=renderLift;
 function renderGradeStats(){
@@ -353,7 +356,7 @@ function renderGradeStats(){
   const by={};S.grades.forEach(g=>(by[g.class]=by[g.class]||[]).push(g));const ks=Object.keys(by).sort();
   if(!ks.length){$("gradeStats").innerHTML=emptyChart("Grades you add in your log show up here by class.");return}
   $("gradeStats").innerHTML=ks.map(k=>{const gs=by[k].sort((a,b)=>a.date<b.date?-1:1),avg=Math.round(gs.reduce((s,g)=>s+pct(g),0)/gs.length*10)/10;
-    return`<div class="card" style="display:flex;flex-direction:column;gap:4px;padding:14px"><div class="row" style="justify-content:space-between"><b>${esc(k)}</b><span class="num">avg ${avg}%</span></div>${gs.length>1?lineChart(gs.map(()=>""),gs.map(pct),{min:Math.max(0,Math.floor(Math.min(...gs.map(pct))/10)*10-10),max:100,unit:"%",color:"#4f7fd6"}):""}${gs.slice(-4).reverse().map(g=>`<div class="list-line"><span>${esc(g.item)} <span class="muted small">${fmtShort(g.date)}</span></span><span class="num">${fmtScore(g)}</span></div>`).join("")}</div>`}).join("");
+    return`<div class="card" style="display:flex;flex-direction:column;gap:4px;padding:14px"><div class="row" style="justify-content:space-between"><b>${esc(k)}</b><span class="num">avg ${avg}%</span></div>${gs.length>1?lineChart(gs.map(()=>""),gs.map(pct),{min:Math.max(0,Math.floor(Math.min(...gs.map(pct))/10)*10-10),max:100,unit:"%",color:"var(--blue)"}):""}${gs.slice(-4).reverse().map(g=>`<div class="list-line"><span>${esc(g.item)} <span class="muted small">${fmtShort(g.date)}</span></span><span class="num">${fmtScore(g)}</span></div>`).join("")}</div>`}).join("");
 }
 
 /* ---------- settings editor (used by onboarding and the Me tab) ---------- */
