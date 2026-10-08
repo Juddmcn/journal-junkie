@@ -110,6 +110,7 @@ input[type=date],input[type=datetime-local]{min-height:38px}
 .btn[disabled]{opacity:.5}
 .link,.more{color:var(--tint);font-size:17px;padding:8px 0;font-weight:400;text-align:left}
 .del{color:var(--label3);font-size:15px;padding:4px 2px;flex:none}
+.link.danger-link{color:var(--red);align-self:flex-start}
 .del.arm{color:var(--red);font-weight:600}
 
 /* chips (goal status) */

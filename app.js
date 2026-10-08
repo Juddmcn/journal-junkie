@@ -485,6 +485,8 @@ function renderMe(){
 }
 $("syncNow").onclick=()=>syncFeeds(true);
 $("signOut").onclick=async()=>{await JJ.signOut()};
+$("deleteAccount").onclick=async()=>{const b=$("deleteAccount");if(!b.dataset.arm){b.dataset.arm="1";b.textContent="Tap again to permanently delete your account";setTimeout(()=>{delete b.dataset.arm;b.textContent="Delete account"},5000);return}
+  b.disabled=true;b.textContent="Deleting…";try{await JJ.deleteAccount();toast("Your account was deleted")}catch(e){toast("Couldn't delete: "+(e.message||e))}b.disabled=false;delete b.dataset.arm;b.textContent="Delete account"};
 $("deleteAll").onclick=async()=>{const b=$("deleteAll");if(!b.dataset.arm){b.dataset.arm="1";b.textContent="Tap again to erase everything";setTimeout(()=>{delete b.dataset.arm;b.textContent="Erase all my data"},4000);return}
   await JJ.deleteAll();toast("All your data was erased");startOnboarding()};
 

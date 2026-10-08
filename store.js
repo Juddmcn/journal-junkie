@@ -172,6 +172,18 @@
       if(MOCK){lsSet("mockdb",{})}else{const {error}=await sb.from("docs").delete().eq("user_id",user.id);if(error)throw error}
       server={};queue=[];saveLocal();rebuild();emitAll();
     },
+    async deleteAccount(){
+      if(!user)return;
+      if(MOCK){lsSet("mockdb",{});lsDel("mockuser")}
+      else{
+        const {data,error}=await sb.functions.invoke("delete-account",{body:{}});
+        if(error){let msg=error.message;try{const b=await error.context.json();if(b&&b.error)msg=b.error}catch(e){}throw new Error(msg)}
+        if(data&&data.error)throw new Error(data.error);
+        try{await sb.auth.signOut()}catch(e){}
+      }
+      try{Object.keys(localStorage).filter(k=>k.startsWith("jj:")).forEach(k=>localStorage.removeItem(k))}catch(e){}
+      server={};queue=[];setUser(null);
+    },
     async fetchFeed(url){
       if(MOCK){const t=(window.JJ_MOCK_ICS||{})[url];if(!t)throw new Error("No mock feed");return t}
       const {data,error}=await sb.functions.invoke("fetch-ics",{body:{url}});
