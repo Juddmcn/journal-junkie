@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Journal Junkie</title>
+<meta name="description" content="Your nightly check-in: log your day, keep your to-dos, watch your streaks grow.">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Journal Junkie">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SIGN IN -->
+<div id="signin" class="screen">
+  <div class="screen-in center">
+    <img src="icons/icon-192.png" alt="" width="96" height="96" class="logo">
+    <h1 class="brand">Journal Junkie</h1>
+    <p class="lead">Your nightly check-in. Log your day, keep your to-dos, pull in your Canvas assignments, and watch your streaks grow.</p>
+    <button type="button" class="btn google" id="signInBtn"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continue with Google</button>
+    <p class="small muted" id="notConfigured" hidden>Journal Junkie isn't connected to its database yet. Check back soon.</p>
+    <p class="small muted">Your entries are private to your account. Other people using Journal Junkie can't see them.</p>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboard" class="screen" hidden>
+  <div class="screen-in">
+    <div class="ob-bar"><div id="obProg"></div></div>
+    <h1 id="obTitle"></h1>
+    <p class="lead" id="obSub"></p>
+    <div id="obBody" class="ob-body"></div>
+    <div class="ob-nav"><button type="button" class="btn ghost" id="obBack">Back</button><button type="button" class="btn" id="obNext">Next</button></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" hidden>
+<div class="wrap">
+  <button type="button" class="sync" id="sync" aria-live="polite"></button>
+
+  <div id="tab-log">
+    <div class="top">
+      <div><div class="hello" id="hello"></div><h1>Today's log</h1><div class="date" id="logDateLabel"></div></div>
+      <input type="date" id="logDate" aria-label="Log date">
+    </div>
+    <section>
+      <div class="streaks">
+        <div class="streak"><b id="stGoal">0</b><span>days hitting every goal</span></div>
+        <div class="streak"><b id="stLog">0</b><span>days logged</span></div>
+      </div>
+      <div class="chips" id="goalChips"></div>
+    </section>
+    <section id="hoursSec"><h2>Hours</h2><div class="grid3" id="hoursGrid"></div></section>
+    <section id="workoutSec">
+      <h2>Workout</h2>
+      <div class="seg" id="workoutSeg"><button type="button" data-v="done">Done</button><button type="button" data-v="rest">Rest day</button><button type="button" data-v="skipped">Skipped</button></div>
+      <div class="small muted" id="restNote"></div>
+      <div id="workoutBox" style="display:flex;flex-direction:column;gap:10px">
+        <label class="f">What I did<textarea id="wHit" rows="2" placeholder="Legs: squats, RDLs, lunges…"></textarea></label>
+        <div style="display:flex;flex-direction:column;gap:6px"><span class="small muted">Lifts / PRs (charted)</span><div id="prRows" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="link" id="addPr" style="align-self:flex-start">+ Add lift</button></div>
+        <label class="f">How it went<input id="wFelt" placeholder="Felt strong today"></label>
+      </div>
+    </section>
+    <section id="habitsSec"><h2>Habits</h2><div id="habitList" style="display:flex;flex-direction:column;gap:10px"></div></section>
+    <section id="bodySec">
+      <h2>Body &amp; mind</h2>
+      <label class="f" id="sleepRow">Sleep last night (hours)<input id="sleep" type="number" inputmode="decimal" min="0" max="16" step="0.25" placeholder="8"></label>
+      <div id="moodRow" style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)">Mood / energy (1–10)<div class="seg mood" id="moodSeg"></div></div>
+    </section>
+    <section id="gradesSec">
+      <h2>Grades</h2>
+      <div id="gradeList"></div>
+      <div class="gr-row"><input id="gClass" list="classList" placeholder="Class" aria-label="Class"><input id="gItem" placeholder="Test, HW…" aria-label="Assignment"><input id="gScore" type="number" inputmode="decimal" placeholder="Score" aria-label="Score"><input id="gOut" type="number" inputmode="decimal" placeholder="/100" aria-label="Out of"></div>
+      <datalist id="classList"></datalist>
+      <button type="button" class="btn ghost sm" id="addGrade" style="align-self:flex-start">Add grade</button>
+    </section>
+    <section><h2>Journal</h2><textarea id="note" rows="5" placeholder="How did today go? What are you proud of?"></textarea></section>
+  </div>
+
+  <div id="tab-tasks" hidden>
+    <div class="top"><div><h1>To-do</h1><div class="date" id="taskSub"></div></div></div>
+    <div class="seg" id="viewSeg"><button type="button" data-view="sections">Sections</button><button type="button" data-view="impact">Grade impact</button></div>
+    <div id="countdowns" style="display:flex;flex-direction:column;gap:12px"></div>
+    <section>
+      <h2>Add a to-do</h2>
+      <input id="tTitle" placeholder="What needs doing?" aria-label="To-do">
+      <div class="grid3">
+        <select id="tArea" aria-label="Area"></select>
+        <select id="tPri" aria-label="Priority"><option value="high">High</option><option value="med" selected>Medium</option><option value="low">Low</option></select>
+        <select id="tRepeat" aria-label="Repeat"><option value="">No repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select>
+      </div>
+      <div class="row"><label class="f" style="flex:1">Due<input id="tDue" type="date"></label><button type="button" class="btn" id="tAdd" style="align-self:flex-end">Add</button></div>
+    </section>
+    <div id="taskAreas" style="display:flex;flex-direction:column;gap:14px"></div>
+  </div>
+
+  <div id="tab-stats" hidden>
+    <div class="top"><div><h1>Progress</h1><div class="date">Last 14 days</div></div></div>
+    <section><div class="streaks">
+      <div class="streak"><b id="stGoal2">0</b><span>days hitting every goal · best <span id="bestGoal" class="num">0</span></span></div>
+      <div class="streak"><b id="stLog2">0</b><span>days logged · best <span id="bestLog" class="num">0</span></span></div>
+    </div></section>
+    <section><h2>To-do completion</h2><div id="chComp"></div></section>
+    <section><h2>Hours by area</h2><div class="legend" id="hoursLegend"></div><div id="chHours"></div></section>
+    <section id="habitStat"><h2>Habits</h2><div id="habitBox"></div></section>
+    <section id="gymStat"><h2>Workouts, last 4 weeks</h2><div class="legend"><span><i style="background:var(--gym)"></i>Done</span><span><i style="background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--gym)"></i>Rest</span><span><i style="background:var(--bad)"></i>Skipped</span></div><div class="cal" id="gymCal"></div></section>
+    <section id="liftStat"><h2>Lift progress</h2><select id="liftSel" aria-label="Lift"></select><div id="chLift"></div></section>
+    <section id="sleepStat"><h2>Sleep</h2><div id="chSleep"></div></section>
+    <section id="moodStat"><h2>Mood / energy</h2><div id="chMood"></div></section>
+    <section id="gradeStat"><h2>Grades by class</h2><div id="gradeStats" style="display:flex;flex-direction:column;gap:10px"></div></section>
+  </div>
+
+  <div id="tab-me" hidden>
+    <div class="top"><div><h1>Me</h1><div class="date">Changes save automatically <span id="meSaved" class="saved"></span></div></div></div>
+    <div id="meEditor" style="display:flex;flex-direction:column;gap:14px"></div>
+    <section><h2>Calendars</h2><div class="small muted" id="feedStatus"></div><button type="button" class="btn ghost sm" id="syncNow" style="align-self:flex-start">Sync calendars now</button></section>
+    <section><h2>Account</h2><div class="small muted">Signed in as <span id="meEmail"></span></div>
+      <div class="row"><button type="button" class="btn ghost sm" id="signOut">Sign out</button><button type="button" class="btn ghost sm danger" id="deleteAll">Erase all my data</button></div>
+      <div class="small muted">Journal Junkie works best added to your home screen: in Safari, tap Share → Add to Home Screen.</div>
+    </section>
+  </div>
+</div>
+
+<div class="save-bar" id="saveBar"><button type="button" class="btn" id="saveLog">Save today's log</button></div>
+<nav class="tabs"><div class="in" role="tablist">
+  <button role="tab" data-tab="log" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Log</button>
+  <button role="tab" data-tab="tasks" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>To-do</button>
+  <button role="tab" data-tab="stats" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Stats</button>
+  <button role="tab" data-tab="me" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/></svg>Me</button>
+</div></nav>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+</body>
+</html>
