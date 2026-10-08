@@ -256,3 +256,10 @@ nav.tabs button[aria-selected="true"] svg{fill:var(--tint-soft)}
 .jmood{font-size:13px;color:var(--label2);flex:none}
 .jnote{font-size:15px;color:var(--label);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;letter-spacing:-.24px}
 #journalList .more{position:relative;padding-left:0}
+
+/* bigger tap targets (Apple HIG: 44pt) without changing the look */
+.task .ck,.del,.swatch{position:relative}
+.task .ck::after,.del::after,.swatch::after{content:"";position:absolute;inset:-11px}
+.del{padding:4px 6px}
+.seg button{min-height:32px}
+.chip.add,.btn.sm{min-height:36px}
