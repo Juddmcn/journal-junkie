@@ -1,6 +1,7 @@
 // Journal Junkie: fetch a calendar feed (.ics) on behalf of a signed-in user.
 // Browsers can't read Canvas / Google Calendar feeds directly (CORS), so the app asks this function.
 // Deploy in Supabase → Edge Functions → "Deploy a new function" → name it fetch-ics → paste this file.
+// In the function's Settings, turn OFF "Verify JWT with legacy secret" (auth is checked below instead).
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -12,7 +13,13 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
-  if (!req.headers.get("authorization")) return json({ error: "Sign in first" }, 401);
+  // Only signed-in Journal Junkie users may use this (checked against Supabase Auth).
+  const auth = req.headers.get("authorization") || "";
+  if (!auth.startsWith("Bearer ")) return json({ error: "Sign in first" }, 401);
+  const who = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/user`, {
+    headers: { Authorization: auth, apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "" },
+  });
+  if (!who.ok) return json({ error: "Sign in first" }, 401);
   let url = "";
   try { url = String((await req.json()).url || "").trim(); } catch { return json({ error: "Bad request" }, 400); }
   if (url.startsWith("webcal://")) url = "https://" + url.slice(9);

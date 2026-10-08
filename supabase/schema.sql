@@ -21,3 +21,7 @@ create policy "read own docs"   on public.docs for select using (auth.uid() = us
 create policy "insert own docs" on public.docs for insert with check (auth.uid() = user_id);
 create policy "update own docs" on public.docs for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "delete own docs" on public.docs for delete using (auth.uid() = user_id);
+
+-- Let signed-in users reach the table through the API (RLS above still limits them to their own rows).
+grant select, insert, update, delete on public.docs to authenticated;
+revoke all on public.docs from anon;
