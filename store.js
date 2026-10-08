@@ -149,7 +149,22 @@
     if(!user){server={};queue=[];rebuild();emitAll()}
     authFns.forEach(f=>{try{f(user)}catch(e){}});
   }
+  const NATIVE_REDIRECT="journaljunkie://auth-callback";
+  async function handleDeepLink(url){
+    if(!url||!url.startsWith(NATIVE_REDIRECT)||!sb)return;
+    try{const Browser=window.Capacitor.Plugins.Browser;if(Browser)await Browser.close()}catch(e){}
+    const u=new URL(url.replace("journaljunkie://","https://x/"));
+    const code=u.searchParams.get("code");
+    if(code){const {error}=await sb.auth.exchangeCodeForSession(code);if(error)console.warn(error)}
+  }
+  function initNative(){
+    const cap=window.Capacitor;if(!(cap&&cap.isNativePlatform&&cap.isNativePlatform()))return;
+    document.documentElement.classList.add("native");
+    const App=cap.Plugins&&cap.Plugins.App;
+    if(App){App.addListener("appUrlOpen",e=>handleDeepLink(e&&e.url));App.addListener("appStateChange",s=>{if(s&&s.isActive)pull()})}
+  }
   async function initAuth(){
+    initNative();
     if(!configured){authFns.forEach(f=>f(null));return}
     if(MOCK){const u=lsGet("mockuser",null);setUser(u);return}
     const {data}=await sb.auth.getSession();
@@ -160,12 +175,39 @@
   window.JJ={
     db,configured,
     user:()=>user,
-    async signIn(){
+    /* provider: "google" | "apple".
+       Web: normal OAuth redirect.
+       Native iOS (Capacitor): Apple uses the native Sign in with Apple sheet; Google opens in an
+       in-app Safari sheet (Google blocks sign-in inside web views) and returns via the
+       journaljunkie://auth-callback deep link, handled in handleDeepLink below. */
+    async signIn(provider){
+      provider=provider||"google";
       if(MOCK){const u={id:"mock-user",email:"friend@example.com",user_metadata:{full_name:"Test Friend"}};lsSet("mockuser",u);setUser(u);return}
+      const cap=window.Capacitor,native=!!(cap&&cap.isNativePlatform&&cap.isNativePlatform());
+      if(native&&provider==="apple"){
+        const SIWA=cap.Plugins&&(cap.Plugins.SignInWithApple||cap.Plugins.SignInWithApplePlugin);
+        if(!SIWA)throw new Error("Sign in with Apple isn't available in this build");
+        const raw=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join("");
+        const hashed=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(raw))),b=>b.toString(16).padStart(2,"0")).join("");
+        const res=await SIWA.authorize({clientId:CFG.appleBundleId||"com.journaljunkie.app",redirectURI:"",scopes:"email name",nonce:hashed});
+        const r=res&&res.response;if(!r||!r.identityToken)throw new Error("Apple sign-in was cancelled");
+        const {data,error}=await sb.auth.signInWithIdToken({provider:"apple",token:r.identityToken,nonce:raw});
+        if(error)throw error;
+        if(r.givenName&&data&&data.user&&!(data.user.user_metadata||{}).full_name){try{await sb.auth.updateUser({data:{full_name:[r.givenName,r.familyName].filter(Boolean).join(" ")}})}catch(e){}}
+        return;
+      }
+      if(native){
+        const Browser=cap.Plugins&&cap.Plugins.Browser;
+        const {data,error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo:NATIVE_REDIRECT,skipBrowserRedirect:true,queryParams:provider==="google"?{prompt:"select_account"}:{}}});
+        if(error)throw error;
+        if(Browser)await Browser.open({url:data.url,presentationStyle:"popover"});else location.href=data.url;
+        return;
+      }
       const redirectTo=location.origin+location.pathname;
-      const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo,queryParams:{prompt:"select_account"}}});
+      const {error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo,queryParams:provider==="google"?{prompt:"select_account"}:{}}});
       if(error)throw error;
     },
+    appleEnabled:()=>!!CFG.apple,
     async signOut(){if(MOCK){lsDel("mockuser")}else{await sb.auth.signOut()}setUser(null)},
     async deleteAll(){
       if(!user)return;

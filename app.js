@@ -573,7 +573,10 @@ function renderSync(s){const p=s.pending?` · ${s.pending} waiting`:"";
   $("sync").textContent={idle:"",syncing:"Syncing…",saving:"Saving…",synced:"Synced "+ago(s.at),offline:"Offline"+p+" · saved on this phone",error:"Couldn't sync"+p+" · tap to retry",auth:"Signed out · tap to sign in"}[s.state]||"";
   $("sync").dataset.state=s.state}
 $("sync").onclick=()=>{if(JJ.status().state==="auth")JJ.signIn();else JJ.pull()};
-$("signInBtn").onclick=async()=>{$("signInBtn").disabled=true;try{await JJ.signIn()}catch(e){toast("Sign-in failed: "+(e.message||e));$("signInBtn").disabled=false}};
+async function doSignIn(btn,provider){btn.disabled=true;try{await JJ.signIn(provider)}catch(e){toast("Sign-in failed: "+(e.message||e))}btn.disabled=false}
+$("signInBtn").onclick=()=>doSignIn($("signInBtn"),"google");
+$("appleBtn").onclick=()=>doSignIn($("appleBtn"),"apple");
+$("appleBtn").hidden=!(JJ.appleEnabled&&JJ.appleEnabled());
 
 function onData(){
   if(!S.loaded)return;
@@ -586,8 +589,8 @@ function boot(){
   db=JJ.db;
   JJ.onStatus(s=>{renderSync(s);if(!S.loaded&&JJ.user()&&(s.state==="synced"||((s.state==="offline"||s.state==="error")&&S.settings))){S.loaded=true;onData();syncFeeds(false)}});
   JJ.onAuth(u=>{
-    $("signin").hidden=!!u;$("app").hidden=!u;$("signInBtn").disabled=false;
-    if(!JJ.configured){$("signInBtn").hidden=true;$("notConfigured").hidden=false}
+    $("signin").hidden=!!u;$("app").hidden=!u;$("signInBtn").disabled=false;$("appleBtn").disabled=false;
+    if(!JJ.configured){$("signInBtn").hidden=true;$("appleBtn").hidden=true;$("notConfigured").hidden=false}
     if(!u){S.loaded=false;$("onboard").hidden=true}
   });
   db.collection("tasks").onSnapshot(s=>{S.tasks=s.docs.map(d=>({id:d.id,...d.data()})).filter(t=>!t.hidden);if(S.loaded){renderTasks();renderChips();if(tab==="stats")renderStats()}});

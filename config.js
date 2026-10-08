@@ -3,4 +3,7 @@
 window.JJ_CONFIG = {
   url: "https://gvyhzgblrwedkjkdymln.supabase.co",
   anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2eWh6Z2JscndlZGtqa2R5bWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0ODM4NjIsImV4cCI6MjEwNzA1OTg2Mn0.WhBv4cqBcdy9f1FEP9smdekmCoVQrtoU0USE78HNDWk"
+  // Turn on once Sign in with Apple is set up in Supabase (needs an Apple Developer account).
+  ,apple: false
+  ,appleBundleId: "com.journaljunkie.app"
 };
