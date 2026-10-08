@@ -18,6 +18,7 @@ EVERY NIGHT, IN A MINUTE
 • Mark your workout done, skipped or a planned rest day
 • Check off your daily habits
 • Rate your mood and sleep, and write a quick journal entry
+• Look back through past entries any time
 
 YOUR TO-DOS, SORTED
 • Paste your Canvas calendar link and new assignments show up automatically
@@ -58,4 +59,4 @@ No third-party advertising, no analytics SDKs, no data sold.
 Journal Junkie requires sign-in so each user's journal is private. Sign in with Apple works with any Apple ID, so no demo account is needed. To see calendar sync, tap Me → Calendar links → Add calendar link and paste: https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics (choose "Events"). Account deletion: Me → Delete account.
 
 ## Screenshots
-`store/screenshots/` — upload the `6.9in-*` set (1320×2868) to the 6.9" slot and `6.5in-*` (1242×2688) to the 6.5" slot. Order: today, todo, impact, progress, progress2.
+`store/screenshots/` — upload the `6.9in-*` set (1320×2868) to the 6.9" slot and `6.5in-*` (1242×2688) to the 6.5" slot. Order: today, todo, impact, progress (journal + streaks), progress2 (charts).
