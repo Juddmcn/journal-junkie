@@ -584,7 +584,7 @@ function boot(){
   db=JJ.db;
   JJ.onStatus(s=>{renderSync(s);if(!S.loaded&&JJ.user()&&(s.state==="synced"||((s.state==="offline"||s.state==="error")&&S.settings))){S.loaded=true;onData();syncFeeds(false)}});
   JJ.onAuth(u=>{
-    $("signin").hidden=!!u;$("app").hidden=!u;
+    $("signin").hidden=!!u;$("app").hidden=!u;$("signInBtn").disabled=false;
     if(!JJ.configured){$("signInBtn").hidden=true;$("notConfigured").hidden=false}
     if(!u){S.loaded=false;$("onboard").hidden=true}
   });
