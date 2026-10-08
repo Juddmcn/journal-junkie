@@ -140,7 +140,8 @@ input[type=date],input[type=datetime-local]{min-height:38px}
 .task .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 section>div>.more{position:relative;display:block;width:100%;padding:11px 0 11px 35px}
 .tag{font-size:13px;letter-spacing:-.08px;color:var(--label2);padding:0}
-.tag+.tag::before{content:"·";margin-right:6px;color:var(--label3)}
+.meta .tag:not(:last-child)::after{content:"·";margin-left:6px;color:var(--label3)}
+.meta{column-gap:6px!important;row-gap:2px!important}
 .tag.cls{color:var(--label2);font-weight:500}
 .tag.high{color:var(--red)}
 .tag.today{color:var(--orange)}
