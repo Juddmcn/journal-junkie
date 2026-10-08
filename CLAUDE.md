@@ -15,3 +15,10 @@ Set `window.JJ_CONFIG = {url: "mock", anonKey: "x"}` (e.g. by routing config.js 
 ## Making changes
 1. `node --check app.js store.js sw.js`, test in mock mode with Playwright (Chromium is at /opt/pw-browsers/chromium).
 2. Commit and push to `main`; Pages redeploys in ~1 minute and phones pick it up on next open.
+
+## iOS / App Store
+- Capacitor wraps the app (`capacitor.config.json`, appId `com.journaljunkie.app`). `npm run build` copies web files into `www/` and swaps the Supabase CDN script for a bundled copy. J builds on a Mac — see `store/SUBMIT.md`.
+- Native-only code is guarded by `window.Capacitor.isNativePlatform()`: Apple sign-in sheet (`@capacitor-community/apple-sign-in` → `signInWithIdToken`), Google via `@capacitor/browser` + `journaljunkie://auth-callback` deep link, local nightly reminder, haptics. Service worker is not registered in the native app.
+- `config.js` `apple:false` hides the Apple button until Supabase's Apple provider is configured.
+- Edge Function `delete-account` deletes the auth user + rows (App Store 5.1.1(v)).
+- Store assets in `store/` (icon, screenshots via Playwright with seeded mock data, listing copy).
