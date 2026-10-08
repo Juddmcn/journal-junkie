@@ -17,11 +17,34 @@ const slug=s=>(String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$
 const fmtShort=s=>{const d=parse(s);return DOW[d.getDay()]+" "+(d.getMonth()+1)+"/"+d.getDate()};
 
 let db=null;
+/* ---------- native (Capacitor) helpers; no-ops on the web ---------- */
+const CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform());
+const plug=n=>NATIVE&&CAP.Plugins?CAP.Plugins[n]:null;
+function haptic(kind){try{const H=plug("Haptics");if(!H)return;if(kind==="success")H.notification({type:"SUCCESS"});else H.impact({style:"LIGHT"})}catch(e){}}
+async function scheduleReminder(){
+  const LN=plug("LocalNotifications");if(!LN)return;
+  const r=cfg().reminder;
+  try{
+    await LN.cancel({notifications:[{id:1}]});
+    if(!r.on)return;
+    const perm=await LN.requestPermissions();if(perm.display!=="granted")return;
+    const [hh,mm]=(r.time||"21:30").split(":").map(Number);
+    await LN.schedule({notifications:[{id:1,title:"Journal Junkie",body:"Time for your nightly check-in. How did today go?",schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true}}]});
+  }catch(e){console.warn(e)}
+}
+let lastReminderKey="";
+function syncReminder(){const k=JSON.stringify(cfg().reminder);if(k!==lastReminderKey){lastReminderKey=k;scheduleReminder()}}
+(function nativeShell(){
+  if(!NATIVE)return;
+  document.documentElement.classList.add("native");
+  const SB=plug("StatusBar");try{SB&&SB.setOverlaysWebView({overlay:true})}catch(e){}
+  const SS=plug("SplashScreen");setTimeout(()=>{try{SS&&SS.hide()}catch(e){}},300);
+})();
 const S={tasks:[],logs:{},grades:[],settings:null,settingsExists:false,loaded:false};
 let curDate=today(),dirty=false,form=null,tab="log";
 
-const DEF={name:"",areas:[],workout:{on:true,restMax:2},habits:[],track:{sleep:true,mood:true,grades:true},classList:[],countdowns:[],feeds:[],onboarded:false};
-function cfg(){const s=S.settings||{};return{...DEF,...s,workout:{...DEF.workout,...(s.workout||{})},track:{...DEF.track,...(s.track||{})}}}
+const DEF={name:"",areas:[],workout:{on:true,restMax:2},habits:[],track:{sleep:true,mood:true,grades:true},classList:[],countdowns:[],feeds:[],reminder:{on:true,time:"21:30"},onboarded:false};
+function cfg(){const s=S.settings||{};return{...DEF,...s,workout:{...DEF.workout,...(s.workout||{})},track:{...DEF.track,...(s.track||{})},reminder:{...DEF.reminder,...(s.reminder||{})}}}
 const areas=()=>cfg().areas;
 const areaBy=k=>areas().find(a=>a.key===k);
 const areaColor=a=>PALETTE[(a&&a.color||0)%PALETTE.length];
@@ -164,7 +187,7 @@ function renderChips(){
 }
 $("saveLog").onclick=async()=>{
   const prev=S.logs[curDate];
-  try{await db.doc("logs/"+curDate).set(draftLog());dirty=false;toast(prev?"Log updated":"Log saved")}catch(e){toast("Couldn't save: "+(e.message||e))}
+  try{await db.doc("logs/"+curDate).set(draftLog());dirty=false;haptic("success");toast(prev?"Log updated":"Log saved")}catch(e){toast("Couldn't save: "+(e.message||e))}
 };
 
 /* grades */
@@ -277,7 +300,7 @@ $("taskAreas").addEventListener("click",async e=>{
   const mo=e.target.closest("[data-more]");if(mo){showMore[mo.dataset.more]=!showMore[mo.dataset.more];renderTasks();return}
   const op=e.target.closest("[data-open]");if(op){openTask=openTask===op.dataset.open?null:op.dataset.open;renderTasks();return}
   const ai=e.target.closest("[data-ai]");if(ai){const t=S.tasks.find(x=>x.id===ai.dataset.id);if(!t)return;await db.doc("tasks/"+t.id).update({ai:t.ai===ai.dataset.ai?null:ai.dataset.ai});return}
-  const tg=e.target.closest("[data-tg]");if(tg){const t=S.tasks.find(x=>x.id===tg.dataset.tg);if(!t)return;const day=today(),d=isDone(t,day);await db.doc("tasks/"+t.id).update(t.repeat?{lastDone:d?null:day}:{done:!d,doneDate:d?null:day});return}
+  const tg=e.target.closest("[data-tg]");if(tg){const t=S.tasks.find(x=>x.id===tg.dataset.tg);if(!t)return;const day=today(),d=isDone(t,day);haptic(d?"light":"success");await db.doc("tasks/"+t.id).update(t.repeat?{lastDone:d?null:day}:{done:!d,doneDate:d?null:day});return}
   const del=e.target.closest("[data-del]");if(del){if(!del.classList.contains("arm")){del.classList.add("arm");del.textContent="Delete";setTimeout(()=>{del.classList.remove("arm");del.textContent="✕"},3000);return}
     const t=S.tasks.find(x=>x.id===del.dataset.del);
     if(t&&t.feedUid){const s=cfg();await saveSettings({dismissed:[...(s.dismissed||[]),t.feedUid].slice(-500)})}
@@ -363,6 +386,8 @@ function renderGradeStats(){
 const AREA_PRESETS=[["School",1,true],["College apps",1,false],["Work",0,false],["Practice",0,false],["Side project",1,false],["Personal",0,false],["Reading",0.5,false]];
 const HABIT_PRESETS=["Ate well","Drank enough water","Read 20 min","Stretched","No phone after 11","Called family"];
 const ED={
+  reminder:d=>`<div class="row" style="justify-content:space-between"><span>Nightly reminder</span><div class="seg yn"><button type="button" data-ed="rem-on" data-v="1" aria-pressed="${d.reminder.on}">On</button><button type="button" data-ed="rem-on" data-v="" aria-pressed="${!d.reminder.on}">Off</button></div></div>
+    ${d.reminder.on?`<label class="f">Remind me at<input type="time" data-ed="rem-time" value="${esc(d.reminder.time)}"></label>`:""}<div class="small muted">A notification each night so you don't forget to log your day.</div>`,
   name:d=>`<label class="f">Your first name<input data-ed="name" value="${esc(d.name)}" placeholder="e.g. Sam" autocomplete="given-name"></label>`,
   areas:d=>`<div class="small muted">Areas are the buckets for your to-dos and hours. Set a daily hours goal to make it part of your streak. Turn on "Classes" for school so assignments get sorted into homework and tests.</div>
     <div class="ed-list">${d.areas.map((a,i)=>`<div class="ed-row"><button type="button" class="swatch" data-ed="area-color" data-i="${i}" style="background:${areaColor(a)}" aria-label="Change color"></button><input data-ed="area-name" data-i="${i}" value="${esc(a.name)}" placeholder="Area name" aria-label="Area name"><label class="mini">Goal<input type="number" inputmode="decimal" min="0" step="0.5" data-ed="area-goal" data-i="${i}" value="${a.hoursGoal||""}" placeholder="0"> h/day</label><label class="mini chk"><input type="checkbox" data-ed="area-classes" data-i="${i}" ${a.classes?"checked":""}> Classes</label><button type="button" class="del" data-ed="area-del" data-i="${i}" aria-label="Remove">✕</button></div>`).join("")||`<div class="empty">No areas yet. Tap one below.</div>`}</div>
@@ -402,6 +427,7 @@ function edHandle(container,draft,onChange){
     if(k==="area-classes"){draft.areas[i].classes=t.checked;onChange(true)}
     else if(k==="cd-at"){draft.countdowns[i].at=t.value;onChange(false)}
     else if(k==="cd-area"){draft.countdowns[i].area=t.value;onChange(false)}
+    else if(k==="rem-time"){draft.reminder.time=t.value||"21:30";onChange(false)}
     else if(k==="feed-type"){draft.feeds[i].type=t.value;onChange(false)}
     else if(k==="feed-area"){draft.feeds[i].area=t.value;onChange(false)}};
   container.onclick=e=>{const b=e.target.closest("button[data-ed]");if(!b)return;const k=b.dataset.ed,i=+b.dataset.i;
@@ -409,6 +435,7 @@ function edHandle(container,draft,onChange){
     else if(k==="area-del")draft.areas.splice(i,1);
     else if(k==="area-color")draft.areas[i].color=((draft.areas[i].color||0)+1)%PALETTE.length;
     else if(k==="wo-on")draft.workout.on=!!b.dataset.v;
+    else if(k==="rem-on")draft.reminder={...draft.reminder,on:!!b.dataset.v};
     else if(k==="habit-add")draft.habits.push({key:slug(b.dataset.name||"habit"),label:b.dataset.name});
     else if(k==="habit-del")draft.habits.splice(i,1);
     else if(k==="track")draft.track[b.dataset.k]=!!b.dataset.v;
@@ -440,7 +467,7 @@ async function saveSettings(patch){
 /* ---------- onboarding ---------- */
 const OB=[["name","Hey! What should we call you?","Journal Junkie is your nightly check-in: log your day, keep your to-dos, and watch your streaks grow."],
   ["areas","What do you want to keep track of?",""],["workout","Workouts",""],["habits","Daily habits",""],["track","Anything else?",""],
-  ["classes","Your classes","Optional. You can skip this and add them later."],["countdowns","Countdowns","Optional."],["feeds","Connect your calendars","Optional, but it's the magic part."]];
+  ["classes","Your classes","Optional. You can skip this and add them later."],["countdowns","Countdowns","Optional."],["feeds","Connect your calendars","Optional, but it's the magic part."]].concat(NATIVE?[["reminder","Want a nightly nudge?","We'll remind you to check in each night."]]:[]);
 let obI=0,obDraft=null;
 function startOnboarding(){
   obDraft=clone(cfg());
@@ -477,7 +504,7 @@ let meDraft=null,meTimer=null;
 function renderMe(){
   if(document.activeElement&&$("tab-me").contains(document.activeElement)&&meDraft)return;
   meDraft=clone(cfg());
-  const secs=[["name","You"],["areas","Areas & daily goals"],["workout","Workouts"],["habits","Habits"],["track","Also track"],["classes","Classes & grade weights"],["countdowns","Countdowns"],["feeds","Calendar links"]];
+  const secs=[["name","You"],...(NATIVE?[["reminder","Reminder"]]:[]),["areas","Areas & daily goals"],["workout","Workouts"],["habits","Habits"],["track","Also track"],["classes","Classes & grade weights"],["countdowns","Countdowns"],["feeds","Calendar links"]];
   $("meEditor").innerHTML=secs.filter(([k])=>k!=="classes"||meDraft.areas.some(a=>a.classes)||meDraft.classList.length).map(([k,t])=>`<section data-sec="${k}"><h2>${t}</h2><div class="ed-body">${ED[k](meDraft)}</div></section>`).join("");
   edHandle($("meEditor"),meDraft,structural=>{clearTimeout(meTimer);meTimer=setTimeout(async()=>{await db.doc("settings/main").set(cleanDraft(clone(meDraft)));$("meSaved").textContent="Saved";setTimeout(()=>$("meSaved").textContent="",1500)},structural?100:700)});
   const u=JJ.user();$("meEmail").textContent=u?u.email:"";
@@ -580,7 +607,7 @@ $("appleBtn").hidden=!(JJ.appleEnabled&&JJ.appleEnabled());
 
 function onData(){
   if(!S.loaded)return;
-  greet();
+  greet();syncReminder();
   if(!dirty)fillForm();else renderChips();
   renderTasks();if(tab==="stats")renderStats();
   if(!cfg().onboarded&&$("onboard").hidden&&JJ.status().state!=="syncing")startOnboarding();

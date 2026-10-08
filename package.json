@@ -1,0 +1,26 @@
+{
+  "name": "journal-junkie",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Journal Junkie: nightly log, to-dos and streaks. Web app + iOS app (Capacitor).",
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "sync": "npm run build && npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor-community/apple-sign-in": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/browser": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@supabase/supabase-js": "2.45.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}

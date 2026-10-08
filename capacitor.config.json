@@ -1,0 +1,14 @@
+{
+  "appId": "com.journaljunkie.app",
+  "appName": "Journal Junkie",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "scheme": "Journal Junkie",
+    "backgroundColor": "#f2f2f7"
+  },
+  "plugins": {
+    "SplashScreen": { "launchAutoHide": false, "backgroundColor": "#f2f2f7", "showSpinner": false },
+    "LocalNotifications": { "iconColor": "#5856D6" }
+  }
+}
